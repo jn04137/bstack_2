@@ -6,17 +6,15 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jmoiron/sqlx"
+	"github.com/go-chi/cors"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 
 	"thdr/bstck_2/team"
 )
 
 func main() {
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-
-	db, err := sqlx.Connect("mysql", "bstack_user:password@(localhost:3306)/bstack_db?tls=false")
+	db, err := sqlx.Connect("mysql", "bstack_user:password@(localhost:3306)/bstack_db?tls=false&parseTime=true")
 	if err != nil {
 		log.Panicf("Error connecting to database: %v", err)
 	}
@@ -25,6 +23,19 @@ func main() {
 	if err != nil {
 		log.Panicf("Failed to ping db: %v", err)
 	}
+
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+
+	r.Use(cors.Handler(cors.Options{
+		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
+		AllowedOrigins:   []string{"https://*", "http://*"},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+  	}))
 
 	log.Printf("Successfully connected to DB")
 
