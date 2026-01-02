@@ -24,6 +24,7 @@ func (h TeamHandler) GetHandler() *chi.Mux {
 
 	r.Get("/", h.getTeam)
 	r.Get("/all", h.getTeams)
+	r.Get("/eseaDivisions", h.getESEADivisions)
 	r.Post("/create", h.createTeam)
 
 	return r
@@ -56,11 +57,17 @@ func (h TeamHandler) getTeam(w http.ResponseWriter, r *http.Request) {
 		Id: 1,
 		TeamName: "seal power",
 		TeamDesc: "We the seals. ARF!",
+		ESEADivision: &ESEADivision{
+			Id: 6,
+			DivisionName: "None",
+		},
 	}
 
 	err := json.NewEncoder(w).Encode(team)
 	if err != nil {
 		log.Printf("Failed to encode team")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
@@ -69,12 +76,29 @@ func (h TeamHandler) getTeams(w http.ResponseWriter, r *http.Request) {
 	teams, err := h.TeamRepo.getTeams()
 	if err != nil {
 		log.Printf("failed to retrieve teams: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	err = json.NewEncoder(w).Encode(&teams)
 	if err != nil {
 		log.Printf("Failed to encode team")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
+
+func (h TeamHandler) getESEADivisions(w http.ResponseWriter, r *http.Request) {
+	divisions, err := h.TeamRepo.getDivisions()
+	if err != nil {
+		log.Printf("Failed to retrieve divisions from db: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(&divisions)
+	w.WriteHeader(http.StatusOK)
+}
+
 

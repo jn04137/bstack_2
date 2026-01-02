@@ -18,13 +18,26 @@ func NewRepo(db *sqlx.DB) *TeamRepo {
 }
 
 func (r TeamRepo) createTeam(team *Team, ctx context.Context) error {
-	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	tx, err := r.db.BeginTxx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.ExecContext(ctx, "INSERT INTO team (nano_id,team_name,team_desc) VALUES (:nano_id, :team_name, :team_desc)", team)
+	res, err := tx.NamedExecContext(ctx, "INSERT INTO team (nano_id,team_name,team_desc) VALUES (:nano_id, :team_name, :team_desc)", team)
 	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	teamId, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx, "INSERT INTO team_esea_division (team_id, esea_division) VALUES (?, ?)", teamId, team.ESEADivision.Id)
+	if err != nil {
+		tx.Rollback()
 		return err
 	}
 
@@ -44,7 +57,7 @@ func (r TeamRepo) getTeam() {
 
 func (r TeamRepo) getDivisions() ([]ESEADivision, error) {
 	var divisions []ESEADivision
-	err := r.db.Select(&divisions, "SELECT id,division_name from esea_division ORDER BY id ASC")
+	err := r.db.Select(&divisions, "SELECT id,division_name from esea_division ORDER BY id DESC")
 
 	return divisions, err
 }
