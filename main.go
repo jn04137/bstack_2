@@ -47,5 +47,8 @@ func main() {
 		w.Write([]byte("Hi there!"))
 	})
 
-	http.ListenAndServe(":8080", r)
+	err = http.ListenAndServe(":8080", r)
+	if err != nil {
+		log.Fatalf("Failed to run http server: %v", err)
+	}
 }

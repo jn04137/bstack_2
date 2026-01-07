@@ -3,6 +3,7 @@ package team
 import (
 	"database/sql"
 	"context"
+	"log"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -51,8 +52,11 @@ func (r TeamRepo) getTeams() ([]Team, error) {
 	return teams, err
 }
 
-func (r TeamRepo) getTeam() {
-
+func (r TeamRepo) getTeam(nanoId string) (Team, error) {
+	log.Printf("This is the nanoid: %v", nanoId)
+	team := Team{}
+	err := r.db.Get(&team, "select id,nano_id,team_name,team_desc,created_at,updated_at FROM team WHERE nano_id=?", nanoId)
+	return team, err
 }
 
 func (r TeamRepo) getDivisions() ([]ESEADivision, error) {
@@ -61,3 +65,14 @@ func (r TeamRepo) getDivisions() ([]ESEADivision, error) {
 
 	return divisions, err
 }
+
+func (r TeamRepo) addTeamAchievement(achievement TeamAchievement) error {
+	_, err := r.db.Exec("INSERT INTO team_achievements ((SELECT team.id WHERE team.nano_id=?),event,placement,details,date) VALUES (?,?,?,?)", 
+		achievement.TeamNanoId, achievement.Event, achievement.Placement, achievement.Details, achievement.Date)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+

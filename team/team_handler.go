@@ -24,8 +24,10 @@ func (h TeamHandler) GetHandler() *chi.Mux {
 
 	r.Get("/", h.getTeam)
 	r.Get("/all", h.getTeams)
+	r.Get("/getTeam/{teamNanoId}", h.getTeam)
 	r.Get("/eseaDivisions", h.getESEADivisions)
 	r.Post("/create", h.createTeam)
+	r.Post("/addAchievement", h.addAchievement)
 
 	return r
 }
@@ -53,17 +55,16 @@ func (h TeamHandler) createTeam(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h TeamHandler) getTeam(w http.ResponseWriter, r *http.Request) {
-	team := Team{
-		Id: 1,
-		TeamName: "seal power",
-		TeamDesc: "We the seals. ARF!",
-		ESEADivision: &ESEADivision{
-			Id: 6,
-			DivisionName: "None",
-		},
+	teamNanoId := chi.URLParam(r, "teamNanoId")
+
+	team, err := h.TeamRepo.getTeam(teamNanoId)
+	if err != nil {
+		log.Printf("Failed to get team: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	err := json.NewEncoder(w).Encode(team)
+	err = json.NewEncoder(w).Encode(team)
 	if err != nil {
 		log.Printf("Failed to encode team")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -101,4 +102,15 @@ func (h TeamHandler) getESEADivisions(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (h TeamHandler) addAchievement(w http.ResponseWriter, r *http.Request) {
+	var achievement TeamAchievement
+	err := json.NewDecoder(r.Body).Decode(&achievement)
+	if err != nil {
+		log.Printf("Failed to decode body: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	h.TeamRepo.addTeamAchievement(achievement)
+}
 
