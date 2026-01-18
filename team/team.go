@@ -23,10 +23,10 @@ type ESEADivision struct {
 type TeamAchievement struct {
 	Id int `json:"id" db:"id"`
 	TeamNanoId string `json:"teamNanoId"`
-	Event string `json:"eventName"`
+	Event string `json:"event"`
 	Placement string `json:"placement"`
 	Details string `json:"details"`
-	Date sql.NullTime `json:"date"`
+	Date string `json:"date"`
 	CreatedAt sql.NullTime `json:"createdAt"`
 	UpdatedAt sql.NullTime `json:"updatedAt"`
 }

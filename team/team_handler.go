@@ -24,6 +24,7 @@ func (h TeamHandler) GetHandler() *chi.Mux {
 
 	r.Get("/", h.getTeam)
 	r.Get("/all", h.getTeams)
+	r.Post("/getAchievements/{teamNanoId}", h.getAchievements)
 	r.Get("/getTeam/{teamNanoId}", h.getTeam)
 	r.Get("/eseaDivisions", h.getESEADivisions)
 	r.Post("/create", h.createTeam)
@@ -110,7 +111,26 @@ func (h TeamHandler) addAchievement(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	log.Printf("This is the achievement: %v", achievement)
 
-	h.TeamRepo.addTeamAchievement(achievement)
+	err = h.TeamRepo.addTeamAchievement(achievement)
+	if err != nil {
+		log.Printf("Failed to add achievement: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h TeamHandler) getAchievements(w http.ResponseWriter, r *http.Request) {
+	teamNanoId := chi.URLParam(r, "teamNanoId")
+	achievements, err := h.TeamRepo.getTeamAchievements(teamNanoId)
+	if err != nil {
+		log.Printf("failed to retrieve achievements: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(&achievements)
+	w.WriteHeader(http.StatusOK)
 }
 

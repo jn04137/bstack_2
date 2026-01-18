@@ -23,6 +23,7 @@ func main() {
 	if err != nil {
 		log.Panicf("Failed to ping db: %v", err)
 	}
+	log.Printf("Successfully connected to DB")
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -36,8 +37,6 @@ func main() {
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
   	}))
-
-	log.Printf("Successfully connected to DB")
 
 	tRepo := team.NewRepo(db)
 	tHandler := team.NewHandler(tRepo)

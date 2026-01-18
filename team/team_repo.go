@@ -67,7 +67,8 @@ func (r TeamRepo) getDivisions() ([]ESEADivision, error) {
 }
 
 func (r TeamRepo) addTeamAchievement(achievement TeamAchievement) error {
-	_, err := r.db.Exec("INSERT INTO team_achievements ((SELECT team.id WHERE team.nano_id=?),event,placement,details,date) VALUES (?,?,?,?)", 
+	log.Printf("Achievement in the repo function: %v", achievement)
+	_, err := r.db.Exec("INSERT INTO team_achievements (team_id,event,placement,details,date) VALUES ((SELECT team.id FROm team WHERE team.nano_id=?),?,?,?,?)", 
 		achievement.TeamNanoId, achievement.Event, achievement.Placement, achievement.Details, achievement.Date)
 	if err != nil {
 		return err
@@ -75,4 +76,14 @@ func (r TeamRepo) addTeamAchievement(achievement TeamAchievement) error {
 
 	return err
 }
+
+func (r TeamRepo) getTeamAchievements(teamNanoId string) ([]TeamAchievement, error) {
+	var achievements []TeamAchievement
+	err := r.db.Select(&achievements, "SELECT * FROM team_achievements WHERE team_id=(SELECT id FROM team WHERE team.nano_id=?)", teamNanoId)
+	if err != nil {
+		return achievements, err
+	}
+
+	return achievements, err
+} 
 
